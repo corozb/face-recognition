@@ -6,11 +6,19 @@ const cameraOn = () => {
 		navigator.webkitGetUserMedia ||
 		navigator.mozGetUserMedia ||
 		navigator.msGetUserMedia
-	navigator.getUserMedia(
-		{ video: {} },
-		(stream) => (video.srcObject = stream),
-		(err) => console.log(err)
-	)
+	// Deprecated
+	// navigator.getUserMedia(
+	// 	{ video: {} },
+	// 	(stream) => (video.srcObject = stream),
+	// 	(err) => console.error(err)
+	// )
+	navigator.mediaDevices
+		.getUserMedia({
+			video: true,
+			audio: false,
+		})
+		.then((stream) => (video.srcObject = stream))
+		.then((err) => console.log(err))
 }
 
 cameraOn()
@@ -33,10 +41,20 @@ video.addEventListener('play', () => {
 			.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
 			.withFaceLandmarks()
 			.withFaceExpressions()
+			.withAgeAndGender()
 		const resizeDetections = faceapi.resizeResults(detections, displaySize)
 		canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
 		faceapi.draw.drawDetections(canvas, resizeDetections)
 		faceapi.draw.drawFaceLandmarks(canvas, resizeDetections)
 		faceapi.draw.drawFaceExpressions(canvas, resizeDetections)
+		resizeDetections.forEach((detection) => {
+			const box = detection.detection.box
+			const drawBox = new faceapi.draw.DrawBox(box, {
+				label: `Gender: ${detection.gender} - Age: ${Math.round(
+					detection.age
+				)} years old`,
+			})
+			drawBox.draw(canvas)
+		})
 	}, 100)
 })
